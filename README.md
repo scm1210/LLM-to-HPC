@@ -1,9 +1,3 @@
----
-editor_options: 
-  markdown: 
-    wrap: 72
----
-
 # LLM-to-HPC
 
 Repo for Running LLMs on Princeton HPC
