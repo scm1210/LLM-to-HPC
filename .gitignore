@@ -5,6 +5,9 @@ __pycache__/
 *.pyd
 *.swp
 
+!data/dummy_data.csv
+
+
 # Virtual environment / conda
 env/
 venv/
