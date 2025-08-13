@@ -1,10 +1,6 @@
 import os
 import getpass
-
-# ---------------- USER SETTINGS ----------------
-# The script will automatically use your HPC user ID
 USER_ID = getpass.getuser()
-
 # You can adjust these for faster/slower runs
 SEED = 42
 BATCH_SIZE = 64            # <-- change this if needed
@@ -16,8 +12,8 @@ LLAMA_MAX_NEW_TOKENS = 10  # For the smaller Llama runs
 GPT_MODEL_PATH = f"/scratch/network/{USER_ID}/.cache/huggingface/gpt-oss-20b"
 LLAMA_MODEL_PATH = f"/scratch/network/{USER_ID}/.cache/huggingface/models--meta-llama--Llama-3.1-8B/snapshots/d04e592bb4f6aa9cfee91e2e20afa771667e1d4b"
 
-OUTPUT_DIR = f"/scratch/network/{USER_ID}/MADS/data/output/preamble"
-DATA_PATH = f"/scratch/network/{USER_ID}/MADS/data/TalkSpaceData_EXP_text_level.csv"
+OUTPUT_DIR = f"/scratch/network/{USER_ID}/LLM-to-HPC/data/output.csv"
+DATA_PATH = f"/scratch/network/{USER_ID}/LLM-to-HPC/data/dummy_data.csv"
 # -----------------------------------------------
 
 # ---------------- CHECK PATHS ----------------

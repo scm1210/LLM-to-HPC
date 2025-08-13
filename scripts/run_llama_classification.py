@@ -1,4 +1,5 @@
 import os
+import getpass
 import pandas as pd
 import torch
 import random
@@ -6,19 +7,40 @@ from transformers import pipeline
 from utils import batched_iterable, extract_label
 
 # ---------------- Config ----------------
-SEED = 42
-BATCH_SIZE = 64
-MAX_NEW_TOKENS = 10
-LLAMA_MODEL_PATH = os.environ.get("LLAMA_MODEL_PATH", "/scratch/network/USER_ID/.cache/huggingface/llama-8B")
-DATA_PATH = os.environ.get("DATA_PATH", "../data/dummy_data.csv")
-OUTPUT_DIR = "../data/output"
+try:
+    import config  # optional config file
+    SEED = getattr(config, "SEED", 42)
+    BATCH_SIZE = getattr(config, "BATCH_SIZE", 64)
+    MAX_NEW_TOKENS = getattr(config, "LLAMA_MAX_NEW_TOKENS", 10)
+    DATA_PATH = getattr(config, "DATA_PATH", "../data/dummy_data.csv")
+except ImportError:
+    SEED = 42
+    BATCH_SIZE = 64
+    MAX_NEW_TOKENS = 10
+    DATA_PATH = "../data/dummy_data.csv"
+
+# Detect HPC user ID
+USER_ID = getpass.getuser()
+
+# Explicit output directory in scratch
+OUTPUT_DIR = f"/scratch/network/{USER_ID}/LLM-to-HPC/output"
+
+# Model path with user ID interpolation
+LLAMA_MODEL_PATH = os.environ.get(
+    "LLAMA_MODEL_PATH",
+    f"/scratch/network/{USER_ID}/.cache/huggingface/models--meta-llama--Llama-3.1-8B/snapshots/d04e592bb4f6aa9cfee91e2e20afa771667e1d4b"
+)
 
 torch.manual_seed(SEED)
 random.seed(SEED)
 
 # ---------------- Load model ----------------
 try:
-    assert os.path.exists(LLAMA_MODEL_PATH), f"Model path {LLAMA_MODEL_PATH} does not exist. Update LLAMA_MODEL_PATH!"
+    if not os.path.exists(LLAMA_MODEL_PATH):
+        raise FileNotFoundError(
+            f"❌ Llama model path does not exist at {LLAMA_MODEL_PATH}. "
+            "Please update LLAMA_MODEL_PATH or download the model."
+        )
     pipe = pipeline(
         "text-generation",
         model=LLAMA_MODEL_PATH,
@@ -66,11 +88,9 @@ with torch.inference_mode():
             label = extract_label(model_output)
             results.append(label)
 
-# ---------------- Attach ratings ----------------
-df["LLAMA_ratings"] = results
-
 # ---------------- Save results ----------------
 os.makedirs(OUTPUT_DIR, exist_ok=True)
-out_path = os.path.join(OUTPUT_DIR, "TalkSpaceData_EXP_text_level_LLAMA_ratings.csv")
+out_path = os.path.join(OUTPUT_DIR, "Test_ratings_llama.csv")
+df["LLAMA_ratings"] = results
 df.to_csv(out_path, index=False)
 print(f"✅ Saved Llama binary ratings to {out_path}")

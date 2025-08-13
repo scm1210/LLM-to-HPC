@@ -1,4 +1,5 @@
 import os
+import getpass
 import pandas as pd
 import torch
 import random
@@ -9,16 +10,35 @@ from utils import batched_iterable, extract_label
 SEED = 42
 BATCH_SIZE = 64
 MAX_NEW_TOKENS = 10  # Binary classification is short
-GPT_MODEL_PATH = os.environ.get("GPT_MODEL_PATH", "/scratch/network/USER_ID/.cache/huggingface/gpt-oss-20b")
-DATA_PATH = os.environ.get("DATA_PATH", "../data/dummy_data.csv")
-OUTPUT_DIR = "../data/output"
+
+# Detect HPC user ID
+USER_ID = getpass.getuser()
+
+# Explicit model path in scratch
+GPT_MODEL_PATH = os.environ.get(
+    "GPT_MODEL_PATH",
+    f"/scratch/network/{USER_ID}/.cache/huggingface/gpt-oss-20b"
+)
+
+# Data path — you can change to an absolute scratch path if desired
+DATA_PATH = os.environ.get(
+    "DATA_PATH",
+    f"/scratch/network/{USER_ID}/LLM-to-HPC/data/dummy_data.csv"
+)
+
+# Output directory in scratch
+OUTPUT_DIR = f"/scratch/network/{USER_ID}/LLM-to-HPC/output"
 
 torch.manual_seed(SEED)
 random.seed(SEED)
 
 # ---------------- Load model ----------------
 try:
-    assert os.path.exists(GPT_MODEL_PATH), f"Model path {GPT_MODEL_PATH} does not exist. Update GPT_MODEL_PATH!"
+    if not os.path.exists(GPT_MODEL_PATH):
+        raise FileNotFoundError(
+            f"❌ GPT model path does not exist at {GPT_MODEL_PATH}. "
+            "Please update GPT_MODEL_PATH or download the model."
+        )
     pipe = pipeline(
         "text-generation",
         model=GPT_MODEL_PATH,
@@ -71,6 +91,6 @@ df["GPT_ratings"] = results
 
 # ---------------- Save results ----------------
 os.makedirs(OUTPUT_DIR, exist_ok=True)
-out_path = os.path.join(OUTPUT_DIR, "TalkSpaceData_EXP_text_level_GPT_ratings.csv")
+out_path = os.path.join(OUTPUT_DIR, "Test_GPT_ratings.csv")
 df.to_csv(out_path, index=False)
 print(f"✅ Saved GPT binary ratings to {out_path}")
